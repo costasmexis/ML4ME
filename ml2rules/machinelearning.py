@@ -80,9 +80,40 @@ class MyClass:
             rule += f" | based on {path[-1][1]:,} samples"
             self.rules += [rule]
     
-    # TODO:: Implement this method
     def get_rules_df(self):
-        rules = export_text(self.tree_clf, feature_names=self.tree_clf.feature_names_in_)
-        # Get th3e 
-        pass
+        rules = export_text(self.tree_clf, feature_names=self.tree_clf.feature_names_in_, spacing=1, decimals=4)
+        rules = rules.split('\n')
+        leaf_nodes = [r for r in rules if "class:" in r]
+        leaf_nodes = [l.replace("|", "") for l in leaf_nodes]
+        leaf_nodes = [l.replace("-", "") for l in leaf_nodes]
+        leaf_nodes = [l.replace(" ", "") for l in leaf_nodes]
+        leaf_nodes = [l.replace("class:", "") for l in leaf_nodes]
+        leaf_nodes = [int(l) for l in leaf_nodes]
+        idx_leaf_nodes = [i for i, r in enumerate(rules) if "class:" in r]
+        # Relace '|' with '' 
+        rules = [r.replace("|", "") for r in rules]
+        rules = [r.replace("-", "") for r in rules]
+        # Replace spaces with ''
+        rules = [r.replace(" ", "") for r in rules]
+        # Define a dataframe to store the rules
+        rules_df = pd.DataFrame(columns=['feature', 'ineq', 'value', 'rule'])
+
+        start = 0
+        for id, i in enumerate(idx_leaf_nodes):
+            ineq = []
+            for r in rules[start:i]:
+                if "<=" in r:
+                    ineq.append("<=")
+                else:
+                    ineq.append(">")
+            _ = [r.split("<=") if "<=" in r else r.split(">") for r in rules[start:i]]
+            feature = [r[0] for r in _]
+            value = [r[1] for r in _]
+            rule = [id for _ in range(len(feature))]
+            label = [leaf_nodes[id] for _ in range(len(feature))]
+            # Append feature, value and rule to rules_df
+            new_df = pd.DataFrame({'feature': feature, 'value': value, 'ineq': ineq, 'rule': rule, 'class': label})
+            rules_df = pd.concat([rules_df, new_df], ignore_index=True)
+            start = i+1
+        return rules_df
     
