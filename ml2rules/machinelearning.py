@@ -1,10 +1,10 @@
 import re
 
+import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier, _tree, export_text, plot_tree
 
-SEED = 42
 
 def split_string(s):
     return re.split(" >=| <=| >| <", s)
@@ -20,6 +20,21 @@ class MyClass:
 
         self.rules = None
         self.cleaned_rules = None
+        
+    def visualize_tree(self, save_path: str = None):
+        """
+        Visualize the decision tree.
+
+        Args:
+            tree (sklearn.tree.DecisionTreeClassifier): The decision tree model.
+            feature_names (list): List of feature names.
+            class_names (list): List of class names.
+            save_path (str): Path to save the tree plot.
+        """
+        plot_tree(self.tree_clf, filled=True, feature_names=self.feature_names)
+        if save_path:
+            plt.savefig(save_path)
+        plt.show()
 
     def get_rules(self):
         """
