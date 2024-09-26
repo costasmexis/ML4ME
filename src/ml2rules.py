@@ -6,11 +6,7 @@ import pandas as pd
 from sklearn.tree import DecisionTreeClassifier, _tree, export_text, plot_tree
 
 
-def split_string(s):
-    return re.split(" >=| <=| >| <", s)
-
-
-class MyClass:
+class TreeRuler:
     def __init__(self, df: pd.DataFrame, target: str, tree_clf: DecisionTreeClassifier):
         self.tree_clf = tree_clf
         self.target = target
@@ -21,7 +17,7 @@ class MyClass:
         self.rules = None
         self.cleaned_rules = None
         
-    def visualize_tree(self, save_path: str = None):
+    def visualize_tree(self, save_path: str = None) -> None:
         """
         Visualize the decision tree.
 
@@ -36,7 +32,7 @@ class MyClass:
             plt.savefig(save_path)
         plt.show()
 
-    def get_rules(self):
+    def get_rules(self) -> None:
         """
         Generate a list of rules from a decision tree.
 
@@ -95,7 +91,11 @@ class MyClass:
             rule += f" | based on {path[-1][1]:,} samples"
             self.rules += [rule]
     
-    def get_rules_df(self):
+    def get_rules_df(self) -> pd.DataFrame:
+        """
+        Write the rules into a DataFrame.
+        """
+        
         rules = export_text(self.tree_clf, feature_names=self.tree_clf.feature_names_in_, spacing=1, decimals=4)
         rules = rules.split('\n')
         leaf_nodes = [r for r in rules if "class:" in r]
