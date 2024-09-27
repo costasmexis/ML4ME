@@ -5,7 +5,7 @@ from typing import Union
 
 ###### Function to load kinetic parameters related data from the .mat files
 def get_labels_mat(filename) -> list:
-    mat_data = loadmat(f"./data/{filename}")
+    mat_data = loadmat(filename)
     label = mat_data["class_vector_train"].reshape(
         -1,
     )
@@ -14,27 +14,27 @@ def get_labels_mat(filename) -> list:
 
 
 def get_parameters_mat(filename) -> pd.DataFrame:
-    mat_data = loadmat(f"./data/{filename}")
+    mat_data = loadmat(filename)
     parameters = mat_data["training_set"]
     return pd.DataFrame(parameters.T)
 
 
 def get_parameter_names_mat(filename) -> list:
-    mat_data = loadmat("./data/paremeterNames.mat")
-    names = mat_data["parameterNames"].reshape(
-        -1,
-    )
+    mat_data = loadmat(filename)
+    names = mat_data["parameterNames"].reshape(-1,)
     names = [name for sublist in names for name in sublist]
     return names
 
 
 def get_dataset(
-    labels_file: str, params_file: str, names_file: str = "paremeterNames.mat"
+    labels_file: str, params_file: str, names_file: str
 ) -> pd.DataFrame:
     labels = get_labels_mat(labels_file)
     parameters = get_parameters_mat(params_file)
     parameters.columns = get_parameter_names_mat(names_file)
     parameters["label"] = labels
+    # In 'label' map 's' to 1 and 'ns' to 0
+    parameters['label'] = parameters['label'].map({'s': 1, 'ns': 0})
     return parameters
 
 
