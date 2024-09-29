@@ -13,6 +13,7 @@ from sklearn.metrics import (
     matthews_corrcoef,
     precision_score,
     recall_score,
+    roc_auc_score,
 )
 from sklearn.model_selection import cross_val_score
 from torch.utils.data import DataLoader, TensorDataset
@@ -107,6 +108,15 @@ def evaluate(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
            
 """ Machine Learning """
+def evaluate_sklean(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
+    
+    y_pred = model.predict(X_test)
+    print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
+    print(f'Precision: {precision_score(y_test, y_pred)}')
+    print(f'Recall: {recall_score(y_test, y_pred)}')
+    print(f'F1 score: {f1_score(y_test, y_pred)}')
+    print(f'ROC AUC score: {roc_auc_score(y_test, y_pred)}')
+    print(f'Matthews correlation coefficient: {matthews_corrcoef(y_test, y_pred)}')
 
 
 def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, 
@@ -137,7 +147,6 @@ def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series,
     best_model = xgb.XGBClassifier(**best_params)
     best_model.fit(X_train, y_train)
     return best_model
-    
     
 
 
