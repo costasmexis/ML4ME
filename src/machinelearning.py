@@ -1,8 +1,12 @@
-import pandas as pd
 import copy
+
+import numpy as np
+import optuna
+import pandas as pd
 import torch
 import torch.nn as nn
 import torch.optim as optim
+import xgboost as xgb
 from sklearn.metrics import (
     accuracy_score,
     f1_score,
@@ -10,10 +14,12 @@ from sklearn.metrics import (
     precision_score,
     recall_score,
 )
+from sklearn.model_selection import cross_val_score
 from torch.utils.data import DataLoader, TensorDataset
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 
+""" Deep Learning - Artificial Neural Network (ANN) """
 # Simple torch ANN for classification
 class ANNClassifier(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, hidden_layers):
@@ -58,7 +64,7 @@ def train(
     best_loss = float("inf")
     best_model_weights = None
     patience = 100
-    threshold = 1e-3
+    threshold = 1e-6
 
     for epoch in range(num_epochs):
         model.train()
@@ -99,3 +105,39 @@ def evaluate(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     print(f'F1: {f1_score(y_test, y_pred)}')
     print(f'MCC: {matthews_corrcoef(y_test, y_pred)}')
     
+           
+""" Machine Learning """
+
+
+def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, 
+                  scoring: str = "matthews_corrcoef", cv: int = 3,
+                  n_trials: int = 100) -> xgb.XGBClassifier:
+        
+    def objective(trial):
+        
+        param_dist_xgb = {
+            "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2),
+            "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+            "max_depth": trial.suggest_int("max_depth", 2, 12),
+            "subsample": trial.suggest_float("subsample", 0.5, 1.0),
+            "booster": trial.suggest_categorical("booster", ["gbtree", "dart"]),
+            "tree_method": trial.suggest_categorical("tree_method", ["auto", "exact", "approx", "hist"]),
+            "reg_alpha": trial.suggest_float("reg_alpha", 0, 0.5),
+            "reg_lambda": trial.suggest_float("reg_lambda", 0.5, 1),
+        }
+        
+        model = xgb.XGBClassifier(**param_dist_xgb)
+        score = cross_val_score(model, X_train, y_train, scoring=scoring, cv=cv, verbose=10, n_jobs=-1).mean()
+        return score
+
+    study = optuna.create_study(direction="maximize")  
+    study.optimize(objective, n_trials=n_trials)
+    
+    best_params = study.best_params
+    best_model = xgb.XGBClassifier(**best_params)
+    best_model.fit(X_train, y_train)
+    return best_model
+    
+    
+
+
