@@ -131,14 +131,14 @@ def evaluate_sklearn(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
 
 
 def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, 
-                  scoring: str = "matthews_corrcoef", cv: int = 3,
+                  scoring: str = "accuracy", cv: int = 3,
                   n_trials: int = 100) -> xgb.XGBClassifier:
         
     def objective(trial):
         
         param_dist_xgb = {
             "learning_rate": trial.suggest_float("learning_rate", 0.01, 0.2),
-            "n_estimators": trial.suggest_int("n_estimators", 50, 500),
+            "n_estimators": trial.suggest_int("n_estimators", 10, 100),
             "max_depth": trial.suggest_int("max_depth", 2, 12),
             "subsample": trial.suggest_float("subsample", 0.5, 1.0),
             "booster": trial.suggest_categorical("booster", ["gbtree", "dart"]),

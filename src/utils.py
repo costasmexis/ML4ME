@@ -1,7 +1,7 @@
 import pandas as pd
 from scipy.io import loadmat
 from typing import Union
-
+from sklearn.model_selection import train_test_split
 
 ###### Function to load kinetic parameters related data from the .mat files
 def get_labels_mat(filename) -> list:
@@ -62,9 +62,24 @@ def get_cc_mat(filename: str):
 
     return enzyme, commonEnz, allEnzymes, commonConCoeff, allConCoeff
 
+##### Stratify split function for the dataset ######
+def stratify_split(
+    data: pd.DataFrame, train_size: float, target: str
+) -> Union[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+    
+    X = data.drop(target, axis=1)
+    y = data[target]
+    
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, train_size=train_size, stratify=y, random_state=42
+    )
+    print(f'Traininig set shape: {X_train.shape}')  
+    print(f'Test set shape: {X_test.shape}')
+    return X_train, X_test, y_train, y_test
+
 ##### Non-stratify split function for the dataset ######
 def non_stratify_split(
-    data: pd.DataFrame, train_size: float, target: str
+    data: pd.DataFrame, train_size: float, target: str, zero_class_pct: float
 ) -> Union[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
     
     X = data.drop(target, axis=1)
@@ -75,7 +90,7 @@ def non_stratify_split(
     indices_1 = y[y == 1].index
 
     # Calculate the number of samples for each class in the training set
-    num_train_0 = int(train_size * 0.65)
+    num_train_0 = int(train_size * zero_class_pct)
     num_train_1 = int(train_size - num_train_0)
 
     # Select the training indices
