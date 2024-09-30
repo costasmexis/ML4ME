@@ -7,7 +7,7 @@ from sklearn.tree import DecisionTreeClassifier, _tree, export_text, plot_tree
 
 from .machinelearning import train_decisiontree
 
-def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, n_trials: int = 200) -> DecisionTreeClassifier:
+def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, scoring: str = 'accuracy', n_trials: int = 200) -> DecisionTreeClassifier:
     """
     Train a decision tree model from a dataset.
 
@@ -18,7 +18,7 @@ def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, n_trials: int = 200) -> D
     Returns:
         DecisionTreeClassifier: The trained decision tree model.
     """
-    tree_clf = train_decisiontree(X_train, y_train, n_trials=n_trials)
+    tree_clf = train_decisiontree(X_train, y_train, scoring=scoring, n_trials=n_trials)
     return tree_clf
 
 def sample_from_df(df: pd.DataFrame, rule: str) -> pd.DataFrame:
@@ -27,7 +27,7 @@ def sample_from_df(df: pd.DataFrame, rule: str) -> pd.DataFrame:
 
         Args:
             df (pd.DataFrame): The dataframe.
-            rule (str): The rule.
+            rule (str): The rule. Should be in the format of def get_rule_constraints (i.e., )
 
         Returns:
             pd.DataFrame: The sampled dataframe.
@@ -126,10 +126,10 @@ class TreeRuler:
             else:
                 classes = path[-1][0][0]
                 l = np.argmax(classes)
-                rule += f"class: {np.abs(self.class_names[1-l>0])} (proba: {np.round(100.0*classes[l]/np.sum(classes),2)}%)"
+                rule += f"class: {self.class_names[l]} (proba: {np.round(100.0 * classes[l] / np.sum(classes), 2)}%)"
+                # rule += f"class: {np.abs(self.class_names[1-l>0])} (proba: {np.round(100.0*classes[l]/np.sum(classes),2)}%)"
             rule += f" | based on {path[-1][1]:,} samples"
-            if 'class: 1' in rule:
-                self.rules += [rule]
+            self.rules += [rule]
                 
     
     def get_rule_constraints(self, rule_index: int) -> str:

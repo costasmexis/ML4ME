@@ -26,7 +26,7 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # Simple torch ANN for classification
 class ANNClassifier(nn.Module):
     def __init__(self, input_dim, hidden_dim, output_dim, hidden_layers):
-        super(ANNClassifier, self).__init__()
+        super().__init__()
         self.hidden_layers = hidden_layers
         self.fc1 = nn.Linear(input_dim, hidden_dim)
         self.fc = nn.Linear(hidden_dim, hidden_dim)
@@ -127,7 +127,7 @@ def evaluate_sklearn(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     print(f'Recall: {recall_score(y_test, y_pred):.4f}')
     print(f'F1 score: {f1_score(y_test, y_pred):.4f}')
     print(f'ROC AUC score: {roc_auc_score(y_test, y_pred):.4f}')
-    print(f'Matthews correlation coefficient: {matthews_corrcoef(y_test, y_pred):.4f}')
+    print(f'MCC: {matthews_corrcoef(y_test, y_pred):.4f}')
 
 
 def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, 
@@ -195,7 +195,7 @@ def train_skoperules(X_train: pd.DataFrame, y_train: pd.Series,
     param_dist = {
         'precision_min': [0.1, 0.15, 0.2, 0.25, 0.3],
         'recall_min': [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
-        'n_estimators': [10, 20, 30, 50, 100],
+        'n_estimators': [5, 10, 15, 20, 30, 40, 50, 100],
         'max_samples': [0.2, 0.25, 0.5, 0.8],
         'max_depth_duplication': [1, 2, 3, None],
     }
