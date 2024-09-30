@@ -44,7 +44,7 @@ class ANNClassifier(nn.Module):
         out = self.sigmoid(out)
         return out
     
-def train(
+def train_ann(
     model: nn.Module,
     X_train: pd.DataFrame,
     y_train: pd.Series,
@@ -102,7 +102,7 @@ def get_predictions(model: nn.Module, X: pd.DataFrame) -> np.ndarray:
     y_pred = y_pred.cpu().detach().numpy().round()
     return y_pred
 
-def evaluate(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> None:
+def evaluate_ann(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
     model.eval()
     
@@ -110,23 +110,24 @@ def evaluate(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     y_pred = model(X_test_tensor)
     y_pred = y_pred.cpu().detach().numpy().round()
 
-    print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
-    print(f'Precision: {precision_score(y_test, y_pred)}')
-    print(f'Recall: {recall_score(y_test, y_pred)}')
-    print(f'F1: {f1_score(y_test, y_pred)}')
-    print(f'MCC: {matthews_corrcoef(y_test, y_pred)}')
+    print(f'Accuracy: {accuracy_score(y_test, y_pred):.4f}')
+    print(f'Precision: {precision_score(y_test, y_pred):.4f}')
+    print(f'Recall: {recall_score(y_test, y_pred):.4f}')
+    print(f'F1: {f1_score(y_test, y_pred):.4f}')
+    print(f'MCC: {matthews_corrcoef(y_test, y_pred):.4f}')
     
            
 """ Machine Learning """
 def evaluate_sklearn(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
+    X_test.columns = X_test.columns.astype(str)
     y_pred = model.predict(X_test)
-    print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
-    print(f'Precision: {precision_score(y_test, y_pred)}')
-    print(f'Recall: {recall_score(y_test, y_pred)}')
-    print(f'F1 score: {f1_score(y_test, y_pred)}')
-    print(f'ROC AUC score: {roc_auc_score(y_test, y_pred)}')
-    print(f'Matthews correlation coefficient: {matthews_corrcoef(y_test, y_pred)}')
+    print(f'Accuracy: {accuracy_score(y_test, y_pred):.4f}')
+    print(f'Precision: {precision_score(y_test, y_pred):.4f}')
+    print(f'Recall: {recall_score(y_test, y_pred):.4f}')
+    print(f'F1 score: {f1_score(y_test, y_pred):.4f}')
+    print(f'ROC AUC score: {roc_auc_score(y_test, y_pred):.4f}')
+    print(f'Matthews correlation coefficient: {matthews_corrcoef(y_test, y_pred):.4f}')
 
 
 def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series, 
