@@ -21,6 +21,30 @@ def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, n_trials: int = 200) -> D
     tree_clf = train_decisiontree(X_train, y_train, n_trials=n_trials)
     return tree_clf
 
+def sample_from_df(df: pd.DataFrame, rule: str) -> pd.DataFrame:
+        """
+        Sample from a dataframe based on a rule.
+
+        Args:
+            df (pd.DataFrame): The dataframe.
+            rule (str): The rule.
+
+        Returns:
+            pd.DataFrame: The sampled dataframe.
+        """
+        for i in rule:
+            if '<=' in i:
+                parameter = i.split('<=')[0]
+                value = i.split('<=')[1]
+                df = df[df[parameter] <= float(value)]
+            elif '>' in i:
+                parameter = i.split('>')[0]
+                value = i.split('>')[1] 
+                df = df[df[parameter] > float(value)]
+            else:
+                raise ValueError('No operator found')
+        return df
+    
 class TreeRuler:
     def __init__(self, df: pd.DataFrame, target: str, tree_clf: DecisionTreeClassifier):
         self.tree_clf = tree_clf
@@ -124,6 +148,8 @@ class TreeRuler:
         rule = rule.split('then')[0].strip()
         rule = rule.split(') ')
         rule = [i.replace('(', '') for i in rule]
+        rule = [i.replace(')', '') for i in rule]
         rule = [i.replace(' ', '') for i in rule]
         return rule
+    
     
