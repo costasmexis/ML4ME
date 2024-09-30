@@ -5,6 +5,21 @@ import numpy as np
 import pandas as pd
 from sklearn.tree import DecisionTreeClassifier, _tree, export_text, plot_tree
 
+from .machinelearning import train_decisiontree
+
+def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, n_trials: int = 200) -> DecisionTreeClassifier:
+    """
+    Train a decision tree model from a dataset.
+
+    Args:
+        X_train (pd.DataFrame): The features of the dataset.
+        y_train (pd.Series): The target of the dataset.
+
+    Returns:
+        DecisionTreeClassifier: The trained decision tree model.
+    """
+    tree_clf = train_decisiontree(X_train, y_train, n_trials=n_trials)
+    return tree_clf
 
 class TreeRuler:
     def __init__(self, df: pd.DataFrame, target: str, tree_clf: DecisionTreeClassifier):
@@ -87,48 +102,28 @@ class TreeRuler:
             else:
                 classes = path[-1][0][0]
                 l = np.argmax(classes)
-                rule += f"class: {np.abs(1-self.class_names[1-l>0])} (proba: {np.round(100.0*classes[l]/np.sum(classes),2)}%)"
+                rule += f"class: {np.abs(self.class_names[1-l>0])} (proba: {np.round(100.0*classes[l]/np.sum(classes),2)}%)"
             rule += f" | based on {path[-1][1]:,} samples"
-            self.rules += [rule]
+            if 'class: 1' in rule:
+                self.rules += [rule]
+                
     
-    def get_rules_df(self) -> pd.DataFrame:
+    def get_rule_constraints(self, rule_index: int) -> str:
         """
-        Write the rules into a DataFrame.
-        """
-        
-        rules = export_text(self.tree_clf, feature_names=self.tree_clf.feature_names_in_, spacing=1, decimals=4)
-        rules = rules.split('\n')
-        leaf_nodes = [r for r in rules if "class:" in r]
-        leaf_nodes = [l.replace("|", "") for l in leaf_nodes]
-        leaf_nodes = [l.replace("-", "") for l in leaf_nodes]
-        leaf_nodes = [l.replace(" ", "") for l in leaf_nodes]
-        leaf_nodes = [l.replace("class:", "") for l in leaf_nodes]
-        leaf_nodes = [int(l) for l in leaf_nodes]
-        idx_leaf_nodes = [i for i, r in enumerate(rules) if "class:" in r]
-        # Relace '|' with '' 
-        rules = [r.replace("|", "") for r in rules]
-        rules = [r.replace("-", "") for r in rules]
-        # Replace spaces with ''
-        rules = [r.replace(" ", "") for r in rules]
-        # Define a dataframe to store the rules
-        rules_df = pd.DataFrame(columns=['feature', 'ineq', 'value', 'rule'])
+        Get the constraints from a rule.
 
-        start = 0
-        for id, i in enumerate(idx_leaf_nodes):
-            ineq = []
-            for r in rules[start:i]:
-                if "<=" in r:
-                    ineq.append("<=")
-                else:
-                    ineq.append(">")
-            _ = [r.split("<=") if "<=" in r else r.split(">") for r in rules[start:i]]
-            feature = [r[0] for r in _]
-            value = [r[1] for r in _]
-            rule = [id for _ in range(len(feature))]
-            label = [leaf_nodes[id] for _ in range(len(feature))]
-            # Append feature, value and rule to rules_df
-            new_df = pd.DataFrame({'feature': feature, 'value': value, 'ineq': ineq, 'rule': rule, 'class': label})
-            rules_df = pd.concat([rules_df, new_df], ignore_index=True)
-            start = i+1
-        return rules_df
+        Args:
+            rule (str): The rule.
+
+        Returns:
+            str: The constraints of the rule.
+        """
+        rule = self.rules[rule_index]
+        rule = rule.replace("if ", "")
+        rule = rule.replace('and', '')
+        rule = rule.split('then')[0].strip()
+        rule = rule.split(') ')
+        rule = [i.replace('(', '') for i in rule]
+        rule = [i.replace(' ', '') for i in rule]
+        return rule
     

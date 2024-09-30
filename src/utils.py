@@ -61,3 +61,40 @@ def get_cc_mat(filename: str):
     allConCoeff = pd.DataFrame(allConCoeff[:, 0, :], columns=allEnzymes)
 
     return enzyme, commonEnz, allEnzymes, commonConCoeff, allConCoeff
+
+##### Non-stratify split function for the dataset ######
+def non_stratify_split(
+    data: pd.DataFrame, train_size: float, target: str
+) -> Union[pd.DataFrame, pd.DataFrame, pd.Series, pd.Series]:
+    
+    X = data.drop(target, axis=1)
+    y = data[target]
+    
+    # Separate the indices of the two classes
+    indices_0 = y[y == 0].index
+    indices_1 = y[y == 1].index
+
+    # Calculate the number of samples for each class in the training set
+    num_train_0 = int(train_size * 0.65)
+    num_train_1 = int(train_size - num_train_0)
+
+    # Select the training indices
+    train_indices_0 = indices_0[:num_train_0]
+    train_indices_1 = indices_1[:num_train_1]
+
+    # Combine the training indices
+    train_indices = train_indices_0.union(train_indices_1)
+
+    # Select the test indices
+    test_indices = indices_0[num_train_0:].union(indices_1[num_train_1:])
+
+    # Split the data
+    X_train = X.loc[train_indices]
+    y_train = y.loc[train_indices]
+    X_test = X.loc[test_indices]
+    y_test = y.loc[test_indices]
+
+    print(f'Traininig set shape: {X_train.shape}')
+    print(f'Test set shape: {X_test.shape}')
+    
+    return X_train, X_test, y_train, y_test

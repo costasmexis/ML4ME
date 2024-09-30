@@ -15,7 +15,9 @@ from sklearn.metrics import (
     recall_score,
     roc_auc_score,
 )
-from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import RandomizedSearchCV, cross_val_score
+from sklearn.tree import DecisionTreeClassifier
+from skrules import SkopeRules
 from torch.utils.data import DataLoader, TensorDataset
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -91,7 +93,15 @@ def train(
                 break
         
     return model
-            
+
+def get_predictions(model: nn.Module, X: pd.DataFrame) -> np.ndarray:
+    """ Get predictions from a trained model. """
+    model.eval()
+    X_tensor = torch.tensor(X.values, dtype=torch.float32, device=device)
+    y_pred = model(X_tensor)
+    y_pred = y_pred.cpu().detach().numpy().round()
+    return y_pred
+
 def evaluate(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
     model.eval()
@@ -108,7 +118,7 @@ def evaluate(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
            
 """ Machine Learning """
-def evaluate_sklean(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
+def evaluate_sklearn(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
     y_pred = model.predict(X_test)
     print(f'Accuracy: {accuracy_score(y_test, y_pred)}')
@@ -149,4 +159,55 @@ def train_xgboost(X_train: pd.DataFrame, y_train: pd.Series,
     return best_model
     
 
+def train_decisiontree(X_train: pd.DataFrame, y_train: pd.Series, 
+                       scoring: str = "accuracy", cv: int = 3,
+                       n_trials: int = 100) -> DecisionTreeClassifier:
+        
+    def objective(trial):
+        
+        param_dist = {
+            "max_depth": trial.suggest_int("max_depth", 2, 25),
+            "min_samples_split": trial.suggest_int("min_samples_split", 2, 25),
+            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 25),
+            "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),            
+        }
+        
+        model = DecisionTreeClassifier(**param_dist)
+        score = cross_val_score(model, X_train, y_train, scoring=scoring, cv=cv, verbose=10, n_jobs=-1).mean()
+        return score
 
+    study = optuna.create_study(direction="maximize")  
+    study.optimize(objective, n_trials=n_trials)    
+
+    best_params = study.best_params
+    best_model = DecisionTreeClassifier(**best_params)
+    # Make X_train columns as string -> needed for `DecisionTreeClassifier.feature_names_in_`
+    X_train.columns = X_train.columns.astype(str)
+    best_model.fit(X_train, y_train)
+    return best_model
+
+
+def train_skoperules(X_train: pd.DataFrame, y_train: pd.Series,
+                     scoring: str = "accuracy", cv: int = 3, n_iter: int = 50) -> SkopeRules:
+
+    # Define the parameter grid
+    param_dist = {
+        'precision_min': [0.1, 0.15, 0.2, 0.25, 0.3],
+        'recall_min': [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
+        'n_estimators': [10, 20, 30, 50, 100],
+        'max_samples': [0.2, 0.25, 0.5, 0.8],
+        'max_depth_duplication': [1, 2, 3, None],
+    }
+
+    skope_rules_clf = SkopeRules(
+        feature_names=X_train.columns.values.tolist(),
+        random_state=42,
+        n_jobs=-1
+    )
+
+    random_search = RandomizedSearchCV(
+        skope_rules_clf, param_distributions=param_dist, scoring=scoring, n_iter=n_iter, cv=3, verbose=10, n_jobs=-1, random_state=42
+    )
+    random_search.fit(X_train, y_train)
+    skope_rules_clf = random_search.best_estimator_
+    return skope_rules_clf
