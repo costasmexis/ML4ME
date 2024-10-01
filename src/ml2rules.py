@@ -21,17 +21,22 @@ def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, scoring: str = 'accuracy'
     tree_clf = train_decisiontree(X_train, y_train, scoring=scoring, n_trials=n_trials)
     return tree_clf
 
-def sample_from_df(df: pd.DataFrame, rule: str) -> pd.DataFrame:
+def sample_from_df(df: pd.DataFrame, rule: str, skope_rules: bool = False) -> pd.DataFrame:
         """
         Sample from a dataframe based on a rule.
 
         Args:
             df (pd.DataFrame): The dataframe.
             rule (str): The rule. Should be in the format of def get_rule_constraints (i.e., )
-
+            skope_rules (bool): Whether the rule is generated from SkopeRules.
+            
         Returns:
             pd.DataFrame: The sampled dataframe.
         """
+        if skope_rules:
+            rule = rule.split('and')
+            rule = [r.replace(' ', '') for r in rule]
+            
         for i in rule:
             if '<=' in i:
                 parameter = i.split('<=')[0]

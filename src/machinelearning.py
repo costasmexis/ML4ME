@@ -193,11 +193,11 @@ def train_skoperules(X_train: pd.DataFrame, y_train: pd.Series,
 
     # Define the parameter grid
     param_dist = {
-        'precision_min': [0.1, 0.15, 0.2, 0.25, 0.3],
-        'recall_min': [0.01, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3],
-        'n_estimators': [5, 10, 15, 20, 30, 40, 50, 100],
-        'max_samples': [0.2, 0.25, 0.5, 0.8],
-        'max_depth_duplication': [1, 2, 3, None],
+        'precision_min': [0.1, 0.2, 0.3],
+        'recall_min': [0.01, 0.05, 0.1, 0.2],
+        'n_estimators': [10, 20, 30, 50],
+        'max_samples': [0.2, 0.4, 0.8],
+        'max_depth_duplication': [2, None],
     }
 
     skope_rules_clf = SkopeRules(
