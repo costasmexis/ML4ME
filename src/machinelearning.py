@@ -16,7 +16,9 @@ from sklearn.metrics import (
     roc_auc_score,
 )
 from sklearn.model_selection import RandomizedSearchCV, cross_val_score
+from sklearn.svm import SVC
 from sklearn.tree import DecisionTreeClassifier
+from sklearn.ensemble import RandomForestClassifier
 from skrules import SkopeRules
 from torch.utils.data import DataLoader, TensorDataset
 
@@ -118,6 +120,14 @@ def evaluate_ann(model: nn.Module, X_test: pd.DataFrame, y_test: pd.Series) -> N
     
            
 """ Machine Learning """
+def cross_val_sklearn(model, X_train: pd.DataFrame, y_train: pd.Series, cv: int = 3) -> None:
+    print(f"Accuracy: {cross_val_score(model, X_train, y_train, scoring='accuracy', cv=cv, n_jobs=-1).mean().round(4)}")
+    print(f"Precision: {cross_val_score(model, X_train, y_train, scoring='precision', cv=cv, n_jobs=-1).mean().round(4)}")
+    print(f"Recall: {cross_val_score(model, X_train, y_train, scoring='recall', cv=cv, n_jobs=-1).mean().round(4)}")
+    print(f"F1: {cross_val_score(model, X_train, y_train, scoring='f1', cv=cv, n_jobs=-1).mean().round(4)}")
+    print(f"ROC AUC: {cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=cv, n_jobs=-1).mean().round(4)}")
+    print(f"MCC: {cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=cv, n_jobs=-1).mean().round(4)}")
+
 def evaluate_sklearn(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
     X_test.columns = X_test.columns.astype(str)
@@ -167,10 +177,10 @@ def train_decisiontree(X_train: pd.DataFrame, y_train: pd.Series,
     def objective(trial):
         
         param_dist = {
-            "max_depth": trial.suggest_int("max_depth", 2, 25),
-            "min_samples_split": trial.suggest_int("min_samples_split", 2, 25),
-            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 25),
-            "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),            
+            "max_depth": trial.suggest_int("max_depth", 2, 12),
+            "min_samples_split": trial.suggest_int("min_samples_split", 2, 12),
+            "min_samples_leaf": trial.suggest_int("min_samples_leaf", 1, 12),
+            # "max_features": trial.suggest_categorical("max_features", ["sqrt", "log2", None]),            
         }
         
         model = DecisionTreeClassifier(**param_dist)
@@ -195,7 +205,7 @@ def train_skoperules(X_train: pd.DataFrame, y_train: pd.Series,
     param_dist = {
         'precision_min': [0.1, 0.2, 0.3],
         'recall_min': [0.01, 0.05, 0.1, 0.2],
-        'n_estimators': [10, 20, 30, 50],
+        'n_estimators': [3, 5, 8, 10, 12, 15, 20, 25],
         'max_samples': [0.2, 0.4, 0.8],
         'max_depth_duplication': [2, None],
     }
@@ -212,3 +222,44 @@ def train_skoperules(X_train: pd.DataFrame, y_train: pd.Series,
     random_search.fit(X_train, y_train)
     skope_rules_clf = random_search.best_estimator_
     return skope_rules_clf
+
+def train_svc(X_train: pd.DataFrame, y_train: pd.Series,
+              scoring: str = 'accuracy', cv: int = 3, n_trials: int = 100) -> SVC:
+    
+    # Define the parameter grid
+    param_dist = {
+        'C': [0.01, 0.1, 0.2, 0.5, 1, 10, 100],
+        'gamma': [0.01, 0.1, 0.2, 0.5, 1],
+        'kernel': ['linear', 'rbf'],
+    }    
+    
+    svc_clf = SVC()
+    
+    random_search = RandomizedSearchCV(
+        svc_clf, param_distributions=param_dist, scoring=scoring, n_iter=n_trials, cv=cv, verbose=10, n_jobs=-1, random_state=42
+    )
+    
+    random_search.fit(X_train, y_train)
+    svc_clf = random_search.best_estimator_
+    return svc_clf
+    
+def train_random_forest(X_train: pd.DataFrame, y_train: pd.Series,
+                        scoring: str = 'accuracy', cv: int = 3, n_trials: int = 100) -> RandomForestClassifier:
+    
+    # Define the parameter grid
+    param_dist = {
+        'n_estimators': [3, 5, 10, 12, 20, 25, 50, 100],
+        'max_depth': [2, 4, 6, 8, 10, 12],
+        'min_samples_split': [2, 5, 10],
+        'min_samples_leaf': [1, 2, 4],
+    }    
+    
+    rf_clf = RandomForestClassifier()
+    
+    random_search = RandomizedSearchCV(
+        rf_clf, param_distributions=param_dist, scoring=scoring, n_iter=n_trials, cv=cv, verbose=10, n_jobs=-1, random_state=42
+    )
+    
+    random_search.fit(X_train, y_train)
+    rf_clf = random_search.best_estimator_
+    return rf_clf

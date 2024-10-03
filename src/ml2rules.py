@@ -7,7 +7,7 @@ from sklearn.tree import DecisionTreeClassifier, _tree, export_text, plot_tree
 
 from .machinelearning import train_decisiontree
 
-def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, scoring: str = 'accuracy', n_trials: int = 200) -> DecisionTreeClassifier:
+def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, cv: int = 3, scoring: str = 'accuracy', n_trials: int = 200) -> DecisionTreeClassifier:
     """
     Train a decision tree model from a dataset.
 
@@ -18,7 +18,7 @@ def ml2tree(X_train: pd.DataFrame, y_train: pd.Series, scoring: str = 'accuracy'
     Returns:
         DecisionTreeClassifier: The trained decision tree model.
     """
-    tree_clf = train_decisiontree(X_train, y_train, scoring=scoring, n_trials=n_trials)
+    tree_clf = train_decisiontree(X_train, y_train, cv=cv, scoring=scoring, n_trials=n_trials)
     return tree_clf
 
 def sample_from_df(df: pd.DataFrame, rule: str, skope_rules: bool = False) -> pd.DataFrame:
