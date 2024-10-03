@@ -126,7 +126,7 @@ def cross_val_sklearn(model, X_train: pd.DataFrame, y_train: pd.Series, cv: int 
     print(f"Recall: {cross_val_score(model, X_train, y_train, scoring='recall', cv=cv, n_jobs=-1).mean().round(4)}")
     print(f"F1: {cross_val_score(model, X_train, y_train, scoring='f1', cv=cv, n_jobs=-1).mean().round(4)}")
     print(f"ROC AUC: {cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=cv, n_jobs=-1).mean().round(4)}")
-    print(f"MCC: {cross_val_score(model, X_train, y_train, scoring='roc_auc', cv=cv, n_jobs=-1).mean().round(4)}")
+    print(f"MCC: {cross_val_score(model, X_train, y_train, scoring='matthews_corrcoef', cv=cv, n_jobs=-1).mean().round(4)}")
 
 def evaluate_sklearn(model, X_test: pd.DataFrame, y_test: pd.Series) -> None:
     
